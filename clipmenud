@@ -34,14 +34,17 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
         # defines command substitution.
         data=${data%x}
 
+        # If $data is blank, return to top of the loop.
         [[ $data == *[^[:blank:]]* ]] || continue
 
+        # If $data is unchanged, return to top of the loop.
         [[ ${last_data[$selection]} == "$data" ]] && continue
 
         # If we were in the middle of doing a selection when the previous poll
-        # ran, then we may have got a partial clip.
+        # ran, then we may have got a partial clip. This considers selections
+        # from left to right as well as selections from right to left.
         possible_partial=${last_data[$selection]}
-        if [[ $possible_partial && $data == "$possible_partial"* ]]; then
+        if [[ $possible_partial && $data == *"$possible_partial"* ]]; then
             rm -- "${last_filename[$selection]}"
         fi
 
