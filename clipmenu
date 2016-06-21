@@ -25,11 +25,6 @@ for (( i=${#files[@]}-1; i>=0; i-- )); do
     # less useful than displaying "foo (6 lines)", where "foo" is the first
     # line in the entry with actionable context.
     first_line=$(sed -n '/./{p;q}' "$file" | cut -c1-"$line_length_limit")
-    lines=$(wc -l < "$file")
-
-    if (( lines > 1 )); then
-        first_line+=" ($lines lines)"
-    fi
 
     ordered_selections+=("$first_line")
     selections[$first_line]=$file
