@@ -48,10 +48,8 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
             rm -- "${last_filename[$selection]}"
         fi
 
-        md5=$(md5sum <<< "$data")
-        md5=${md5%% *}
         amount_of_lines=$(echo "$data" | wc -l)
-        filename="$cache_dir/$(LC_ALL=C date +%F-%H-%M-%S)-$md5"
+        filename="$cache_dir/$(LC_ALL=C date +%F-%T.%N)"
         (( amount_of_lines > 1 )) && filename+=" ($amount_of_lines lines)"
 
         last_data[$selection]=$data
