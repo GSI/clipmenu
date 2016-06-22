@@ -56,8 +56,7 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
             rm -- "${last_filename[$selection]}"
         fi
 
-        filename="$CACHE_DIR/$(LC_ALL=C date +%F-%T.%N)"
-        filename+=" $(echo "$data" | wc -l)"
+        filename="$CACHE_DIR/$(echo "$data" | wc -l)"
 
         # We look for the first line matching regex /./ here because we want the
         # first line that can provide reasonable context to the user. That is, if
@@ -65,7 +64,7 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
         # less useful than displaying "foo (6 lines)", where "foo" is the first
         # line in the entry with actionable context.
         first_line=$(echo "$data" | sed -n '/./{p;q}' | sed "s#\/#$SLASH_REPLACER#g" | cut -c1-"$LINE_LENGTH_LIMIT")
-        filename+=" $first_line"
+        filename+="  $first_line"
 
         last_data[$selection]=$data
         last_filename[$selection]=$filename

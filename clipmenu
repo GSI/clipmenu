@@ -1,75 +1,21 @@
 #!/bin/bash
 
-shopt -s nullglob
-
-# We use this to make sure the cache files are sorted bytewise
-# TODO Check if this setting is still required.
-LC_COLLATE=C
-
 # Use ⁄ ("fraction slash") for replacing slashes in file names.
 readonly SLASH_REPLACER='⁄'
-
-declare -A selections
-ordered_selections=()
-
-files=("/tmp/clipmenu.$USER/"*)
-
-
-initialize_lines () {
-        first_line=$(printf "$file" | cut -d' ' -f3-)
-        lines=$(printf "$file" | cut -d' ' -f2)
-}
-
-format_unpadded_line_count () {
-        # This displays the line count to the left of any clipboard entry.
-        first_line=$(printf "$file" | cut -d' ' -f2-)
-}
-
-format_line_count_left () {
-        initialize_lines
-
-        # This ALIGNS the line count at the left of any clipboard entry.
-        first_line="$(printf %2d $lines)  $first_line"
-}
-
-format_line_count_right () {
-        initialize_lines
-
-        # This adds the line count to the right of any clipboard entry as " (N lines)".
-        if (( $lines > 1 )); then
-                first_line+=" ($lines lines)"
-        fi
-}
-
-
-# We can't use `for ... in` here because we need to add files to
-# ordered_selections from last to first -- that is, newest to oldest. Incoming
-# clipboard entries have a ISO datetime prefixed to the front to aid in this.
-for (( i=${#files[@]}-1; i>=0; i-- )); do
-    file=${files[$i]}
-
-    # Activate ONE of these
-    #format_unpadded_line_count
-    format_line_count_left
-    #format_line_count_right
-
-    first_line=$(echo "$first_line" | sed "s#$SLASH_REPLACER#/#g")
-    ordered_selections+=("$first_line")
-    selections[$first_line]=$file
-done
 
 # It's okay to hardcode `-l 8` here as a sensible default without checking
 # whether `-l` is also in "$@", because the way that dmenu works allows a later
 # argument to override an earlier one. That is, if the user passes in `-l`, our
 # one will be ignored.
-chosen_line=$(printf '%s\n' "${ordered_selections[@]}" | dmenu -l 8 "$@")
+CACHE_DIR="/tmp/clipmenu.$USER"
+chosen_file=$(cd $CACHE_DIR && find * | sed "s#$SLASH_REPLACER#/#g" | dmenu -l 8 "$@")
 
-[[ $chosen_line ]] || exit 1
+[[ $chosen_file ]] || exit 1
 
 for selection in clipboard primary; do
-    if type -p xsel >/dev/null 2>&1; then
-        xsel -i --"$selection" < "${selections[$chosen_line]}"
+    if type -p xsel &>/dev/null; then
+        xsel -i --"$selection" < "$CACHE_DIR/$chosen_file"
     else
-        xclip -sel "$selection" < "${selections[$chosen_line]}"
+        xclip -sel "$selection" < "$CACHE_DIR/$chosen_file"
     fi
 done
