@@ -12,7 +12,7 @@ mkdir -p -m0700 "$CACHE_DIR"
 declare -A last_data
 declare -A last_filename
 
-while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
+while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
     for selection in clipboard primary; do
         # TODO Evaluating existence just once, would (currently) result in a 2 % performance gain.
         #      Entirely removing the conditon, would increase performance by 28 %.
