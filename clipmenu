@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Use ⁄ ("fraction slash") for replacing slashes in file names.
-readonly SLASH_REPLACER='⁄'
-
 # It's okay to hardcode `-l 8` here as a sensible default without checking
 # whether `-l` is also in "$@", because the way that dmenu works allows a later
 # argument to override an earlier one. That is, if the user passes in `-l`, our
 # one will be ignored.
 CACHE_DIR="/tmp/clipmenu.$USER"
-chosen_file=$(cd $CACHE_DIR && find * | sed "s#$SLASH_REPLACER#/#g" | dmenu -l 8 "$@")
+
+# 'ls' would allow to easily output all files in a sorted manner, but it's use
+# should be avoided in scripts.
+# With zsh globbing, files could be listed in order like this: files=( *(.oc) )
+files_with_timestamps=$(cd $CACHE_DIR && find * | while read -r file ; do stat -c '%Y %n' "$file" ; done)
+files_sorted=$(echo "$files_with_timestamps" | sort -rn | cut -d' ' -f2-)
+chosen_file=$(echo "$files_sorted" | dmenu -l 8 "$@")
 
 [[ $chosen_file ]] || exit 1
 
