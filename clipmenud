@@ -4,8 +4,10 @@
 # Timestamp + line count will typically require less than 40 of those.
 readonly LINE_LENGTH_LIMIT=210
 
-cache_dir=/tmp/clipmenu.$USER/
-mkdir -p -m0700 "$cache_dir"
+# Use ⁄ ("fraction slash") for replacing slashes in file names.
+readonly SLASH_REPLACER='⁄'
+readonly CACHE_DIR=/tmp/clipmenu.$USER/
+mkdir -p -m0700 "$CACHE_DIR"
 
 declare -A last_data
 declare -A last_filename
@@ -54,7 +56,7 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
             rm -- "${last_filename[$selection]}"
         fi
 
-        filename="$cache_dir/$(LC_ALL=C date +%F-%T.%N)"
+        filename="$CACHE_DIR/$(LC_ALL=C date +%F-%T.%N)"
         filename+=" $(echo "$data" | wc -l)"
 
         # We look for the first line matching regex /./ here because we want the
@@ -62,7 +64,7 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
         # you have 5 leading lines of whitespace, displaying " (6 lines)" is much
         # less useful than displaying "foo (6 lines)", where "foo" is the first
         # line in the entry with actionable context.
-        first_line=$(echo "$data" | sed -n '/./{p;q}' | sed 's#\/##g' | cut -c1-"$LINE_LENGTH_LIMIT")
+        first_line=$(echo "$data" | sed -n '/./{p;q}' | sed "s#\/#$SLASH_REPLACER#g" | cut -c1-"$LINE_LENGTH_LIMIT")
         filename+=" $first_line"
 
         last_data[$selection]=$data

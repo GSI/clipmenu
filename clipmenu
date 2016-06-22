@@ -6,6 +6,9 @@ shopt -s nullglob
 # TODO Check if this setting is still required.
 LC_COLLATE=C
 
+# Use ⁄ ("fraction slash") for replacing slashes in file names.
+readonly SLASH_REPLACER='⁄'
+
 declare -A selections
 ordered_selections=()
 
@@ -50,6 +53,7 @@ for (( i=${#files[@]}-1; i>=0; i-- )); do
     format_line_count_left
     #format_line_count_right
 
+    first_line=$(echo "$first_line" | sed "s#$SLASH_REPLACER#/#g")
     ordered_selections+=("$first_line")
     selections[$first_line]=$file
 done
