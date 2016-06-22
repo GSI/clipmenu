@@ -56,7 +56,9 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
             rm -- "${last_filename[$selection]}"
         fi
 
-        filename="$CACHE_DIR/$(echo "$data" | wc -l)"
+        lines=$(echo "$data" | wc -l)
+        # This ALIGNS the line count at the left of any clipboard entry.
+        filename="$CACHE_DIR/$(printf %2d $lines)"
 
         # We look for the first line matching regex /./ here because we want the
         # first line that can provide reasonable context to the user. That is, if
