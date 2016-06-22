@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# A typical file name restriction is 255 bytes (tmpfs/extX/ntfs/...).
+# Timestamp + line count will typically require less than 40 of those.
+readonly LINE_LENGTH_LIMIT=210
+
 cache_dir=/tmp/clipmenu.$USER/
 mkdir -p -m0700 "$cache_dir"
 
@@ -8,7 +12,9 @@ declare -A last_filename
 
 while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
     for selection in clipboard primary; do
-        if type -p xsel >/dev/null 2>&1; then
+        # TODO Evaluating existence just once, would (currently) result in a 2 % performance gain.
+        #      Entirely removing the conditon, would increase performance by 28 %.
+        if type -p xsel &>/dev/null; then
             data=$(xsel --"$selection"; printf x)
             # Take ownership of the clipboard, in case the original application
             # is unable to serve the clipboard request (due to being suspended,
@@ -48,9 +54,16 @@ while sleep "${CLIPMENUD_SLEEP:-0.5}"; do
             rm -- "${last_filename[$selection]}"
         fi
 
-        amount_of_lines=$(echo "$data" | wc -l)
         filename="$cache_dir/$(LC_ALL=C date +%F-%T.%N)"
-        (( amount_of_lines > 1 )) && filename+=" ($amount_of_lines lines)"
+        filename+=" $(echo "$data" | wc -l)"
+
+        # We look for the first line matching regex /./ here because we want the
+        # first line that can provide reasonable context to the user. That is, if
+        # you have 5 leading lines of whitespace, displaying " (6 lines)" is much
+        # less useful than displaying "foo (6 lines)", where "foo" is the first
+        # line in the entry with actionable context.
+        first_line=$(echo "$data" | sed -n '/./{p;q}' | sed 's#\/##g' | cut -c1-"$LINE_LENGTH_LIMIT")
+        filename+=" $first_line"
 
         last_data[$selection]=$data
         last_filename[$selection]=$filename
