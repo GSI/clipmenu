@@ -13,9 +13,13 @@ declare -A last_data
 declare -A last_filename
 
 while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
+    # TODO To minimize delays, consider handling both registers within one and
+    #      the same run. Consider the below suggestions for optimization first.
     for selection in clipboard primary; do
         # TODO Evaluating existence just once, would (currently) result in a 2 % performance gain.
         #      Entirely removing the conditon, would increase performance by 28 %.
+        #      Support for both clipboard tools (xsel & xclip) may still be maintained by packing
+        #      the according logic into functions and using something like `eval ${TOOL}_clip`.
         if type -p xsel &>/dev/null; then
             data=$(xsel --"$selection"; printf x)
             # Take ownership of the clipboard, in case the original application
