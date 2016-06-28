@@ -9,11 +9,12 @@ CACHE_DIR="/tmp/clipmenu.$USER"
 # 'ls' would allow to easily output all files in a sorted manner, but it's use
 # should be avoided in scripts.
 # With zsh globbing, files could be listed in order like this: files=( *(.oc) )
-files_with_timestamps=$(cd $CACHE_DIR && find ./ -type f | while read -r file ; do stat -c '%Y %n' "$file" ; done)
+# IFS= is required in order to support file names with *trailing* new lines:
+files_with_timestamps=$(cd $CACHE_DIR && find ./ -type f | while IFS= read -r file ; do stat -c '%y %n' "$file" ; done)
 
-# 'cut' removed the recently inserted %Y and find's "./". (In order to support
+# 'cut' removes the recently inserted %y and find's "./". (In order to support
 # files with leading whitespaces, "find *" couldn't be used here.
-files_sorted=$(echo "$files_with_timestamps" | sort -rn | cut -c14-)
+files_sorted=$(echo "$files_with_timestamps" | sort -rn | cut -c39-)
 chosen_file=$(echo "$files_sorted" | dmenu -l 8 "$@")
 
 [[ $chosen_file ]] || exit 1
