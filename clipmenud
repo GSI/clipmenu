@@ -12,7 +12,8 @@ mkdir -p -m0700 "$CACHE_DIR"
 declare -A last_data
 declare -A last_filename
 
-while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
+while sleep "${CLIPMENUD_SLEEP:-3}"; do
+    echo -ne ".\n#####################################################\n."
     # TODO To minimize delays, consider handling both registers within one and
     #      the same run. Consider the below suggestions for optimization first.
     for selection in clipboard primary; do
@@ -29,9 +30,11 @@ while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
             # Primary is excluded from the change of ownership as applications
             # sometimes act up if clipboard focus is taken away from them --
             # for example, urxvt will unhilight text, which is undesirable.
-            if [[ $selection != primary ]]; then
-                xsel --"$selection" | xsel -i --"$selection"
-            fi
+            #
+            # TODO Find out what this does - piping the selection back to itself (?!)
+            #if [[ $selection != primary ]]; then
+            #    xsel --"$selection" | xsel -i --"$selection"
+            #fi
         else
             data=$(xclip -o -sel "$selection"; printf x)
             # See above comments about taking ownership of the clipboard for
@@ -47,18 +50,21 @@ while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
         data=${data%x}
 
         # If $data is blank, return to top of the loop.
-        [[ $data == *[^[:blank:]]* ]] || continue
+        [[ ${data} == *[^[:blank:]]* ]] || (echo -ne "BLANK:    ==>${data}<==\n." && continue)
 
         # If $data is unchanged, return to top of the loop.
-        [[ ${last_data[$selection]} == "$data" ]] && continue
+        echo -ne ".\n===$selection===\n"
+        echo -ne "LAST:     ==>${last_data[$selection]}<==\n"
+        echo -ne "CURRENT:  ==>${data}<==\n"
+        [[ ${last_data[$selection]} == "$data" ]] && (echo -ne "unchanged.\n" && continue) || echo -e "CHANGED.\n"
 
         # If we were in the middle of doing a selection when the previous poll
         # ran, then we may have got a partial clip. This considers selections
         # from left to right as well as selections from right to left.
-        possible_partial=${last_data[$selection]}
-        if [[ $possible_partial && $data == *"$possible_partial"* ]]; then
-            rm -- "${last_filename[$selection]}"
-        fi
+        #possible_partial=${last_data[$selection]}
+        #if [[ $possible_partial && $data == *"$possible_partial"* ]]; then
+        #    rm -- "${last_filename[$selection]}"
+        #fi
 
         lines=$(echo "$data" | wc -l)
         # This ALIGNS the line count at the left of any clipboard entry.
@@ -69,12 +75,12 @@ while sleep "${CLIPMENUD_SLEEP:-0.3}"; do
         # you have 5 leading lines of whitespace, displaying " (6 lines)" is much
         # less useful than displaying "foo (6 lines)", where "foo" is the first
         # line in the entry with actionable context.
-        first_line=$(echo "$data" | sed -n '/./{p;q}' | sed "s#\/#$SLASH_REPLACER#g" | cut -c1-"$LINE_LENGTH_LIMIT")
-        filename+="  $first_line"
+        first_line=$(echo "${data}" | sed -n '/./{p;q}' | sed "s#\/#${SLASH_REPLACER}#g" | cut -c1-"${LINE_LENGTH_LIMIT}")
+        filename+="  ${first_line}"
 
-        last_data[$selection]=$data
-        last_filename[$selection]=$filename
+        last_data[$selection]=${data}
+        last_filename[$selection]=${filename}
 
-        printf '%s' "$data" > "$filename"
+        printf '%s' "${data}" > "${filename}"
     done
 done
