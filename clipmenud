@@ -13,10 +13,11 @@ declare -A last_data
 declare -A last_filename
 
 while sleep "${CLIPMENUD_SLEEP:-3}"; do
-    echo -ne ".\n#####################################################\n."
+    echo -ne "\n\n\nwhile ###############################################\n"
     # TODO To minimize delays, consider handling both registers within one and
     #      the same run. Consider the below suggestions for optimization first.
     for selection in clipboard primary; do
+        echo -ne "for   ######################\n"
         # TODO Evaluating existence just once, would (currently) result in a 2 % performance gain.
         #      Entirely removing the conditon, would increase performance by 28 %.
         #      Support for both clipboard tools (xsel & xclip) may still be maintained by packing
@@ -49,14 +50,24 @@ while sleep "${CLIPMENUD_SLEEP:-3}"; do
         # defines command substitution.
         data=${data%x}
 
+        echo -ne "\n===$selection===\n"
+
         # If $data is blank, return to top of the loop.
-        [[ ${data} == *[^[:blank:]]* ]] || (echo -ne "BLANK:    ==>${data}<==\n." && continue)
+        if [[ ${data} == *[^[:blank:]]* ]]; then
+                echo -ne "PRESENT:  ==>${data}<==\n"
+        else
+                continue
+        fi
 
         # If $data is unchanged, return to top of the loop.
-        echo -ne ".\n===$selection===\n"
-        echo -ne "LAST:     ==>${last_data[$selection]}<==\n"
-        echo -ne "CURRENT:  ==>${data}<==\n"
-        [[ ${last_data[$selection]} == "$data" ]] && (echo -ne "unchanged.\n" && continue) || echo -e "CHANGED.\n"
+        if [[ ${last_data[$selection]} == "$data" ]]; then
+                echo -ne "unchanged.\n"
+                continue
+        else
+                echo -ne "LAST:     ==>${last_data[$selection]}<==\n"
+                echo -ne "CURRENT:  ==>${data}<==\n"
+                echo -ne "CHANGED.\n"
+        fi
 
         # If we were in the middle of doing a selection when the previous poll
         # ran, then we may have got a partial clip. This considers selections
